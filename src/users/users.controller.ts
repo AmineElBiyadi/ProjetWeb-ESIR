@@ -1,4 +1,4 @@
-import { Controller, Get,Body,Param, Put,Post } from '@nestjs/common';
+import { Controller, Get,Body,Param, Put,Post, Delete, HttpException } from '@nestjs/common';
 import { User } from './user.entity.js';
 
 const users : User[] = [
@@ -12,20 +12,24 @@ const users : User[] = [
 @Controller('users')
 export class UsersController {
 
-    @Get ('all')
+    @Get()
     getAllUsers() {
+
         return users;
     }
 
     @Get (':id')
-    getById(@Param('id') id: string) {
+    getById(@Param('id') id: string){
         const user = users.find(u => u.id === parseInt(id));
+        if (!user){
+            throw new HttpException('User not found',404); 
+        }
         return user;
     }
 
     @Post()
     createUser(@Body() input: any): User {
-        const newUser = new User (input.id, input.lastname, input.firstname);
+        const newUser = new User (users.length, input.lastname, input.firstname);
     
         users.push(newUser);
         return newUser;
@@ -35,7 +39,7 @@ export class UsersController {
     @Put (':id')
     updateUser(@Param('id') id: string, @Body() input: any) {
         const user = users.find(u=> u.id === parseInt(id));
-        if (user ){
+        if (user){
             if(input.lastname !== undefined ){
                 user.lastname = input.lastname;
             }
@@ -46,4 +50,15 @@ export class UsersController {
         return user;
     }
 
+    @Delete (':id')
+    deleteUser(@Param('id') id: string  ) {
+        const user = users.find(u=> u.id === parseInt(id));
+        if (user){
+            const index = users.indexOf(user);
+            users.splice(index, 1);
+            return true ; 
+        }
+        return false;
+    }
+    
 }
