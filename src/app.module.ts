@@ -3,6 +3,9 @@ import { createObserveModule } from '@nestjs/observe';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { UsersModule } from './users/users.module.js';
+import { AssociationController } from './association/association.controller.js';
+import { AssociationService } from './association/association.service.js';
+import { AssociationModule } from './association/association.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -16,8 +19,9 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
       serviceId: 'projet',
     }),
     UsersModule,
+    AssociationModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, AssociationController],
+  providers: [AppService, AssociationService],
 })
 export class AppModule {}
