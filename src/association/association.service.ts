@@ -1,67 +1,70 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { Association } from './association.entity.js';
 import { UsersService } from '../users/users.service.js';
 import { User } from '../users/user.entity.js';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
-const associations: Association[] = [
-    {
-        id: 0,
-        name: 'Association A',
-        idUsers: [0]
-    }
-]
 
 @Injectable()
 export class AssociationService {
-    constructor(private service: UsersService) {}
+    constructor(private service: UsersService , 
+        @InjectRepository(Association)
+        private associationsRepository: Repository<Association>,
+    ) {}
 
-    getAll(){
-        return associations;
+    getAll() : Promise<Association[] | null> {
+        return this.associationsRepository.find();
     }
 
-    getById(id: string){
-        const association = associations.find(u => u.id === parseInt(id));
+    getById(id: number) : Promise<Association | null> {
+        const association = this.associationsRepository.findOneBy({ id });
+        if (!association) {
+            throw new HttpException('Association not found', 404);
+        }
         return association;
     }
 
-    create(name: string, idUsers: number[]): Association {
-        const newAssociation = new Association (associations.length, name, idUsers);
+    async create(name: string, idUsers: number[] = []): Promise<Association> {
+        const users : User[] = await this.findUsers(idUsers);
 
-        associations.push(newAssociation);
-        return newAssociation;
+        const newAssociation = this.associationsRepository.create({ name, users });
+        return this.associationsRepository.save(newAssociation);
+    }
+
+    async update(id: number, name: string , idUsers: number[]) {
+        const association = await this.associationsRepository.findOneBy({ id });
+        if (!association) {
+            throw new HttpException('Association not found', 404);
+        }
+        const users : User[] = await this.findUsers(idUsers);
+        association.name = name ? name : association.name;
+        association.users = idUsers.length > 0 ? users : association.users;
     
+        return this.associationsRepository.save(association);
     }
 
-    update(id: string, name: string , idUsers: number[]) {
-        const association = associations.find(u=> u.id === parseInt(id));
-        if (association){
-            if(name !== undefined ){
-                association.name = name;
-            }
-            if(idUsers !== undefined ){
-                association.idUsers = idUsers;
-            }
+    async delete(id: number) {
+       const result = await this.associationsRepository.delete({ id });
+       if (result.affected === 0) {
+            throw new HttpException('Association not found', 404);
         }
-        return association;
+        return result;
     }
 
-    delete(id: string) {
-        const association = associations.find(u=> u.id === parseInt(id));
-        if (association){
-            const index = associations.indexOf(association);
-            associations.splice(index, 1);
-            return true ; 
+    async getMembers(id : number): Promise<User[] | undefined> {
+        const association = await this.getById(id);
+        if (!association) {
+            throw new HttpException('Association not found', 404);
         }
-        return false;
+        return association.users;
     }
 
-    getMembers(association : Association): User[] | undefined {
+    private async findUsers(ids: number[]): Promise<User[]> {
         const users: User[] = [];
-        for (const userId of association.idUsers) {
-            const user = this.service.getById(userId.toString());
-            if (user) {
-                users.push(user);
-            }
+        for (const userId of ids) {
+        const user = await this.service.getById(userId);
+        if (user) users.push(user);
         }
         return users;
     }

@@ -15,7 +15,7 @@ export class UsersController {
 
     @Get (':id')
     getById(@Param('id') id: string){
-        const user = this.service.getById(id);
+        const user = this.service.getById(parseInt(id));
         if (!user){
             throw new HttpException('User not found',404); 
         }
@@ -23,18 +23,18 @@ export class UsersController {
     }
 
     @Post()
-    createUser(@Body() input: any): User {
+    createUser(@Body() input: any) {
         return this.service.create(input.lastname, input.firstname, input.age);
     }
 
     @Put (':id')
     updateUser(@Param('id') id: string, @Body() input: any) {
-        return this.service.update(id, input.lastname, input.firstname, input.age);
+        return this.service.update(parseInt(id), input.lastname, input.firstname, input.age);
     }
 
     @Delete (':id')
     deleteUser(@Param('id') id: string  ) {
-        return this.service.delete(id);
+        return this.service.delete(parseInt(id));
     }
     
 }

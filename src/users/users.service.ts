@@ -1,60 +1,51 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException , HttpException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { User } from './user.entity.js';
 
 
-const users : User[] = [
-    {
-        id: 0,
-        lastname: 'Doe',
-        firstname: 'John',
-        age: 23
-    }
-]
-
 @Injectable()
 export class UsersService {
-    
-    getAll(){
-        return users;
+    constructor(
+        @InjectRepository(User)
+        private usersRepository: Repository<User>,
+    ) {}
+
+    getAll() : Promise<User[] | null> {
+        return this.usersRepository.find();
     }
 
-    getById(id: string){
-        const user = users.find(u => u.id === parseInt(id));
-        return user;
-    }
-
-    create(lastname: string , firstname: string, age: number): User {
-        const newUser = new User (users.length, lastname, firstname, age);
-    
-        users.push(newUser);
-        return newUser;
-    
-    }
-
-    update(id: string, lastname: string , firstname: string, age: number) {
-        const user = users.find(u=> u.id === parseInt(id));
-        if (user){
-            if(lastname !== undefined ){
-                user.lastname = lastname;
-            }
-            if(firstname !== undefined ){
-                user.firstname = firstname;
-            }
-            if(age !== undefined ){
-                user.age = age;
-            }
+    getById(id: number) : Promise<User | null> {
+        const user = this.usersRepository.findOneBy({ id });
+        if (!user) {
+            throw new HttpException('User not found', 404);
         }
         return user;
     }
 
-    delete(id: string) {
-        const user = users.find(u=> u.id === parseInt(id));
-        if (user){
-            const index = users.indexOf(user);
-            users.splice(index, 1);
-            return true ; 
+    create(lastname: string , firstname: string, age: number) : Promise<User> {
+        const newUser = this.usersRepository.create({ lastname, firstname, age });
+        return this.usersRepository.save(newUser);
+    }
+
+    async update(id: number, lastname: string , firstname: string, age: number) : Promise<User> {
+        const user = await this.usersRepository.findOneBy({ id });
+        if (!user) {
+            throw new HttpException('User not found', 404);
         }
-        return false;
+        user.lastname = lastname ?  lastname : user.lastname;
+        user.firstname = firstname ? firstname : user.firstname;
+        user.age = age ? age : user.age;
+
+        return this.usersRepository.save(user);
+    }
+
+    async delete(id: number) {
+        const result = await this.usersRepository.delete({ id });
+        if (result.affected === 0) {
+            throw new HttpException('User not found', 404);
+        }
+        return result;
     }
 
 
