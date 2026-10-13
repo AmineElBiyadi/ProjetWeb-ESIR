@@ -14,15 +14,12 @@ export class AssociationController {
     }
 
     @Get (':id')
-    getById(@Param('id') id: string){
-        if (!this.service.getById(id)){
-            throw new HttpException('Association not found',404); 
-        }
-        return this.service.getById(id);
+    getById(@Param('id') id: string){   
+        return this.service.getById(parseInt(id));
     }
 
     @Post()
-    createAssociation(@Body() input: any): Association {
+    createAssociation(@Body() input: any) {
         const idUsers = [];
         for (const id of input.idUsers) {
             idUsers.push(parseInt(id));
@@ -36,24 +33,16 @@ export class AssociationController {
         for (const id of input.idUsers) {
             idUsers.push(parseInt(id));
         }
-        return this.service.update(id, input.name, idUsers);
+        return this.service.update(parseInt(id), input.name, idUsers);
     }
 
     @Delete (':id')
     deleteAssociation(@Param('id') id: string  ) {
-        return this.service.delete(id);
+        return this.service.delete(parseInt(id));
     }
 
     @Get(':id/members')
-    getMembers(@Param('id') id: string): User[] {
-        const association = this.service.getById(id);
-        if (!association) {
-            throw new HttpException('Association not found',404); 
-        }
-        const users =  this.service.getMembers(association);
-        if (!users){
-            throw new HttpException('no members found',404); 
-        }
-        return users;
+    getMembers(@Param('id') id: string) {
+        return this.service.getMembers(parseInt(id));
     }
 }
