@@ -15,8 +15,8 @@ export class UsersService {
         return this.usersRepository.find();
     }
 
-    getById(id: number) : Promise<User | null> {
-        const user = this.usersRepository.findOneBy({ id });
+    async getById(id: number) : Promise<User | null> {
+        const user = await this.usersRepository.findOneBy({ id });
         if (!user) {
             throw new HttpException('User not found', 404);
         }

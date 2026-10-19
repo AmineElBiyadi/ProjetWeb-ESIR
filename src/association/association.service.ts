@@ -17,8 +17,8 @@ export class AssociationService {
         return this.associationsRepository.find();
     }
 
-    getById(id: number) : Promise<Association | null> {
-        const association = this.associationsRepository.findOneBy({ id });
+    async getById(id: number) : Promise<Association | null> {
+        const association = await this.associationsRepository.findOneBy({ id });
         if (!association) {
             throw new HttpException('Association not found', 404);
         }
